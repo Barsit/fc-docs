@@ -1,0 +1,32 @@
+# macOS / editor noise
+.DS_Store
+._*
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local environments and caches
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+node_modules/
+.cache/
+AGENTS.md
+
+# Build / temporary outputs
+dist/
+build/
+tmp/
+temp/
+*.log
+
+# Platform-generated API reference docs.
+# Keep the directories via .gitkeep, but do not track generated content.
+docs/**/开发参考/*
+!docs/**/开发参考/.gitkeep

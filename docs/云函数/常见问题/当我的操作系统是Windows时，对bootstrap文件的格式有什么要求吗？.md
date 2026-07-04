@@ -1,0 +1,3 @@
+# 当我的操作系统是Windows时，对bootstrap文件的格式有什么要求吗？
+
+如果您使用的是Windows操作系统，您需要确保bootstrap的文件格式为UNIX格式。
