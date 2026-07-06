@@ -22,6 +22,7 @@ AGENTS.md
 # Build / temporary outputs
 dist/
 build/
+_site/
 tmp/
 temp/
 *.log
