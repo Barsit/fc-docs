@@ -30,7 +30,7 @@ browser 模板的默认配置如下：
 
 | **配置项** | **默认值** | **说明** |
 | --- | --- | --- |
-| 容器镜像 | `fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.33` | 预置 browser 镜像 |
+| 容器镜像 | `fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.36` | 预置 browser 镜像 |
 | 默认端口 | 3000 | 沙箱服务监听端口 |
 | CPU | 4 vCPU | 最低要求 |
 | 内存 | 8192 MB | 最低要求 |
@@ -95,7 +95,7 @@ from e2b import Template, default_build_logger
 API_KEY = "e2b_xxx"  # 替换为您的 API Key
 API_URL = "https://api.cn-beijing.e2b.fc.aliyuncs.com"
 DOMAIN = "cn-beijing.e2b.fc.aliyuncs.com"
-FROM_IMAGE = "fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.33"
+FROM_IMAGE = "fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.36"
 OPTS = {"api_key": API_KEY, "api_url": API_URL, "domain": DOMAIN}
 
 TEMPLATE_NAME = "my-browser-template"
@@ -124,7 +124,7 @@ const API_KEY = 'e2b_xxx'; // 替换为您的 API Key
 const API_URL = 'https://api.cn-beijing.e2b.fc.aliyuncs.com';
 const DOMAIN = 'cn-beijing.e2b.fc.aliyuncs.com';
 const FROM_IMAGE =
-  'fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.33';
+  'fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.36';
 const OPTS = { apiKey: API_KEY, apiUrl: API_URL, domain: DOMAIN };
 
 const TPL_NAME = 'my-browser-template';

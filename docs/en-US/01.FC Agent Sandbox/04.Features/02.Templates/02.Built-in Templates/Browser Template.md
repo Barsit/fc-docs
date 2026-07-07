@@ -30,7 +30,7 @@ The default configuration of the browser template is as follows:
 
 | **Item** | **Default** | **Description** |
 | --- | --- | --- |
-| Container image | `fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.33` | Prebuilt browser image |
+| Container image | `fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.36` | Prebuilt browser image |
 | Default port | 3000 | Port the sandbox service listens on |
 | CPU | 4 vCPU | Minimum requirement |
 | Memory | 8192 MB | Minimum requirement |
@@ -95,7 +95,7 @@ from e2b import Template, default_build_logger
 API_KEY = "e2b_xxx"  # Replace with your API key
 API_URL = "https://api.cn-beijing.e2b.fc.aliyuncs.com"
 DOMAIN = "cn-beijing.e2b.fc.aliyuncs.com"
-FROM_IMAGE = "fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.33"
+FROM_IMAGE = "fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.36"
 OPTS = {"api_key": API_KEY, "api_url": API_URL, "domain": DOMAIN}
 
 TEMPLATE_NAME = "my-browser-template"
@@ -124,7 +124,7 @@ const API_KEY = 'e2b_xxx'; // Replace with your API key
 const API_URL = 'https://api.cn-beijing.e2b.fc.aliyuncs.com';
 const DOMAIN = 'cn-beijing.e2b.fc.aliyuncs.com';
 const FROM_IMAGE =
-  'fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.33';
+  'fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.36';
 const OPTS = { apiKey: API_KEY, apiUrl: API_URL, domain: DOMAIN };
 
 const TPL_NAME = 'my-browser-template';
