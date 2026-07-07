@@ -30,10 +30,10 @@ browser 模板的默认配置如下：
 
 | **配置项** | **默认值** | **说明** |
 | --- | --- | --- |
-| 容器镜像 | `fc-e2b-registry.us-west-1.cr.aliyuncs.com/runtime/browser:v0.0.32` | 预置 browser 镜像 |
+| 容器镜像 | `fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.33` | 预置 browser 镜像 |
 | 默认端口 | 3000 | 沙箱服务监听端口 |
-| CPU | 2 vCPU | 最低要求 |
-| 内存 | 2048 MB | 最低要求 |
+| CPU | 4 vCPU | 最低要求 |
+| 内存 | 8192 MB | 最低要求 |
 | 磁盘大小 | 10240 MB | 建议 10 GB 以获得充足的临时存储空间，函数计算将默认提供 |
 
 ## 快速入门
@@ -82,7 +82,7 @@ from e2b import Sandbox, Template
 
 load_dotenv(Path(__file__).resolve().parent / ".env", override=True)
 
-IMAGE = "fc-e2b-registry.us-west-1.cr.aliyuncs.com/runtime/browser:v0.0.32"
+IMAGE = "fc-e2b-registry.cn-beijing.cr.aliyuncs.com/runtime/browser:v0.0.32"
 TEMPLATE_NAME = f"browser-sandbox-{int(time.time())}"
 BROWSER_SANDBOX_PORT = 3000
 
