@@ -23,6 +23,8 @@ AGENTS.md
 dist/
 build/
 _site/
+_mkdocs_src/
+mkdocs.generated.yml
 tmp/
 temp/
 *.log

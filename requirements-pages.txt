@@ -1,1 +1,1 @@
-Markdown==3.7
+mkdocs-material==9.7.6
