@@ -173,13 +173,16 @@ TARGET_URL = "https://example.com"
 SCREENSHOT_PATH = "browser-example.png"
 
 
-def wait_until_healthy(sbx: Sandbox, timeout: int = 60) -> None:
-    """Poll the /health endpoint inside the sandbox until the browser service is ready or times out."""
+def wait_until_healthy(sbx: Sandbox, host: str, token: str, timeout: int = 60) -> None:
+    """Poll the public gateway /health endpoint until the browser service is ready or times out."""
+    # Go through the public gateway host (3000-<sandboxId>.<domain>); the X-Access-Token header is required.
+    token_header = f"-H 'X-Access-Token: {token}' " if token else ""
     deadline = time.time() + timeout
     while time.time() < deadline:
         result = sbx.commands.run(
             f"curl -sS -o /dev/null -w '%{{http_code}}' -m 4 "
-            f"http://localhost:{BROWSERTOOL_PORT}/health",
+            f"{token_header}"
+            f"https://{host}/health",
             timeout=10,
         )
         code = "".join(result.stdout or []).strip()
@@ -191,19 +194,22 @@ def wait_until_healthy(sbx: Sandbox, timeout: int = 60) -> None:
     raise TimeoutError(f"browser service not ready within {timeout}s")
 
 
-def verify_vnc_handshake(sbx: Sandbox) -> None:
-    """Probe the /ws/livestream WebSocket handshake inside the sandbox; a 101 response means VNC is ready."""
+def verify_vnc_handshake(sbx: Sandbox, host: str, token: str) -> None:
+    """Probe the public gateway /ws/livestream WebSocket handshake; a 101 response means VNC is ready."""
     # After a successful upgrade the connection stays a WebSocket, so curl keeps reading until the -m
     # timeout (exit code 28). This is expected: swallow the exit code with `|| true` and only parse the
     # response headers already received.
+    # Go through the public gateway host (3000-<sandboxId>.<domain>); the X-Access-Token header is required.
+    token_header = f"-H 'X-Access-Token: {token}' " if token else ""
     cmd = (
         "curl -sS -i -m 4 "
         "-H 'Connection: Upgrade' "
         "-H 'Upgrade: websocket' "
         "-H 'Sec-WebSocket-Version: 13' "
         "-H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' "
-        "http://localhost:{port}/ws/livestream || true"
-    ).format(port=BROWSERTOOL_PORT)
+        "{token_header}"
+        "https://{host}/ws/livestream || true"
+    ).format(token_header=token_header, host=host)
     result = sbx.commands.run(cmd, timeout=15)
     out = "".join(result.stdout or [])
     status_line = out.splitlines()[0].strip() if out.strip() else "<no response>"
@@ -245,24 +251,24 @@ try:
     host = sbx.get_host(BROWSERTOOL_PORT)
     cdp_ws_url = f"wss://{host}/ws/automation"
     vnc_ws_url = f"wss://{host}/ws/livestream"
+    # The e2b public gateway requires the X-Access-Token header, otherwise requests/WS upgrades return 403
+    token = sbx._envd_access_token
     print("\n--- WebSocket endpoints ---")
     print(f"  host: {host}")
     print(f"  CDP : {cdp_ws_url}")
     print(f"  VNC : {vnc_ws_url}")
 
     print("\n--- Waiting for health check ---")
-    wait_until_healthy(sbx)
+    wait_until_healthy(sbx, host, token)
 
     print("\n--- Playwright CDP case ---")
-    # The e2b public gateway requires the X-Access-Token header, otherwise the WS upgrade returns 403
     headers = {}
-    token = sbx._envd_access_token
     if token:
         headers["X-Access-Token"] = token
     verify_with_playwright(cdp_ws_url, headers)
 
     print("\n--- VNC livestream case ---")
-    verify_vnc_handshake(sbx)
+    verify_vnc_handshake(sbx, host, token)
 finally:
     if sbx is not None:
         sbx.kill()
@@ -289,8 +295,10 @@ const SCREENSHOT_PATH = 'browser-example.png';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** Poll the /health endpoint inside the sandbox until the browser service is ready or times out. */
-async function waitUntilHealthy(sbx, timeout = 60) {
+/** Poll the public gateway /health endpoint until the browser service is ready or times out. */
+async function waitUntilHealthy(sbx, host, token, timeout = 60) {
+  // Go through the public gateway host (3000-<sandboxId>.<domain>); the X-Access-Token header is required.
+  const tokenHeader = token ? `-H 'X-Access-Token: ${token}' ` : '';
   const deadline = Date.now() + timeout * 1000;
   while (Date.now() < deadline) {
     // While the service is down, curl exits non-zero (connection failure) and e2b throws a
@@ -299,7 +307,8 @@ async function waitUntilHealthy(sbx, timeout = 60) {
     try {
       result = await sbx.commands.run(
         `curl -sS -o /dev/null -w '%{http_code}' -m 4 ` +
-          `http://localhost:${BROWSERTOOL_PORT}/health`,
+          tokenHeader +
+          `https://${host}/health`,
         { timeoutMs: 10_000 },
       );
     } catch (e) {
@@ -316,18 +325,21 @@ async function waitUntilHealthy(sbx, timeout = 60) {
   throw new Error(`browser service not ready within ${timeout}s`);
 }
 
-/** Probe the /ws/livestream WebSocket handshake inside the sandbox; a 101 response means VNC is ready. */
-async function verifyVncHandshake(sbx) {
+/** Probe the public gateway /ws/livestream WebSocket handshake; a 101 response means VNC is ready. */
+async function verifyVncHandshake(sbx, host, token) {
   // After a successful upgrade the connection stays a WebSocket, so curl keeps reading until the -m
   // timeout (exit code 28). This is expected: swallow the exit code with `|| true` and only parse the
   // response headers already received.
+  // Go through the public gateway host (3000-<sandboxId>.<domain>); the X-Access-Token header is required.
+  const tokenHeader = token ? `-H 'X-Access-Token: ${token}' ` : '';
   const cmd =
     `curl -sS -i -m 4 ` +
     `-H 'Connection: Upgrade' ` +
     `-H 'Upgrade: websocket' ` +
     `-H 'Sec-WebSocket-Version: 13' ` +
     `-H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' ` +
-    `http://localhost:${BROWSERTOOL_PORT}/ws/livestream || true`;
+    tokenHeader +
+    `https://${host}/ws/livestream || true`;
   const result = await sbx.commands.run(cmd, { timeoutMs: 15_000 });
   const out = result.stdout || '';
   const statusLine = out.trim() ? out.split('\n')[0].trim() : '<no response>';
@@ -371,25 +383,25 @@ async function main() {
     const host = sbx.getHost(BROWSERTOOL_PORT);
     const cdpWsUrl = `wss://${host}/ws/automation`;
     const vncWsUrl = `wss://${host}/ws/livestream`;
+    // The e2b public gateway requires the X-Access-Token header, otherwise requests/WS upgrades return 403
+    const token = sbx.envdAccessToken;
     console.log('\n--- WebSocket endpoints ---');
     console.log(`  host: ${host}`);
     console.log(`  CDP : ${cdpWsUrl}`);
     console.log(`  VNC : ${vncWsUrl}`);
 
     console.log('\n--- Waiting for health check ---');
-    await waitUntilHealthy(sbx);
+    await waitUntilHealthy(sbx, host, token);
 
     console.log('\n--- Playwright CDP case ---');
-    // The e2b public gateway requires the X-Access-Token header, otherwise the WS upgrade returns 403
     const headers = {};
-    const token = sbx.envdAccessToken;
     if (token) {
       headers['X-Access-Token'] = token;
     }
     await verifyWithPlaywright(cdpWsUrl, headers);
 
     console.log('\n--- VNC livestream case ---');
-    await verifyVncHandshake(sbx);
+    await verifyVncHandshake(sbx, host, token);
   } finally {
     if (sbx !== null) {
       await sbx.kill();

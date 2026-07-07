@@ -173,13 +173,16 @@ TARGET_URL = "https://example.com"
 SCREENSHOT_PATH = "browser-example.png"
 
 
-def wait_until_healthy(sbx: Sandbox, timeout: int = 60) -> None:
-    """轮询沙箱内 /health 端点，直到 browser 服务就绪或超时。"""
+def wait_until_healthy(sbx: Sandbox, host: str, token: str, timeout: int = 60) -> None:
+    """轮询公网网关 /health 端点，直到 browser 服务就绪或超时。"""
+    # 走公网网关 host（3000-<sandboxId>.<domain>），需带 X-Access-Token 头。
+    token_header = f"-H 'X-Access-Token: {token}' " if token else ""
     deadline = time.time() + timeout
     while time.time() < deadline:
         result = sbx.commands.run(
             f"curl -sS -o /dev/null -w '%{{http_code}}' -m 4 "
-            f"http://localhost:{BROWSERTOOL_PORT}/health",
+            f"{token_header}"
+            f"https://{host}/health",
             timeout=10,
         )
         code = "".join(result.stdout or []).strip()
@@ -191,18 +194,21 @@ def wait_until_healthy(sbx: Sandbox, timeout: int = 60) -> None:
     raise TimeoutError(f"browser 服务在 {timeout}s 内未就绪")
 
 
-def verify_vnc_handshake(sbx: Sandbox) -> None:
-    """在沙箱内探测 /ws/livestream 的 WebSocket 握手，返回 101 即视为 VNC 就绪。"""
+def verify_vnc_handshake(sbx: Sandbox, host: str, token: str) -> None:
+    """探测公网网关 /ws/livestream 的 WebSocket 握手，返回 101 即视为 VNC 就绪。"""
     # 升级成功后连接会保持为 WebSocket，curl 会一直读到 -m 超时（退出码 28），
     # 这属于预期行为，用 `|| true` 吞掉退出码，只解析已收到的响应头。
+    # 走公网网关 host（3000-<sandboxId>.<domain>），需带 X-Access-Token 头。
+    token_header = f"-H 'X-Access-Token: {token}' " if token else ""
     cmd = (
         "curl -sS -i -m 4 "
         "-H 'Connection: Upgrade' "
         "-H 'Upgrade: websocket' "
         "-H 'Sec-WebSocket-Version: 13' "
         "-H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' "
-        "http://localhost:{port}/ws/livestream || true"
-    ).format(port=BROWSERTOOL_PORT)
+        "{token_header}"
+        "https://{host}/ws/livestream || true"
+    ).format(token_header=token_header, host=host)
     result = sbx.commands.run(cmd, timeout=15)
     out = "".join(result.stdout or [])
     status_line = out.splitlines()[0].strip() if out.strip() else "<无响应>"
@@ -244,24 +250,24 @@ try:
     host = sbx.get_host(BROWSERTOOL_PORT)
     cdp_ws_url = f"wss://{host}/ws/automation"
     vnc_ws_url = f"wss://{host}/ws/livestream"
+    # e2b 公网网关要求 X-Access-Token 头，否则请求/WS 升级 403
+    token = sbx._envd_access_token
     print("\n--- WebSocket 端点 ---")
     print(f"  host: {host}")
     print(f"  CDP : {cdp_ws_url}")
     print(f"  VNC : {vnc_ws_url}")
 
     print("\n--- 等待健康检查 ---")
-    wait_until_healthy(sbx)
+    wait_until_healthy(sbx, host, token)
 
     print("\n--- Playwright CDP 用例 ---")
-    # e2b 公网网关要求 X-Access-Token 头，否则 WS 升级 403
     headers = {}
-    token = sbx._envd_access_token
     if token:
         headers["X-Access-Token"] = token
     verify_with_playwright(cdp_ws_url, headers)
 
     print("\n--- VNC livestream 用例 ---")
-    verify_vnc_handshake(sbx)
+    verify_vnc_handshake(sbx, host, token)
 finally:
     if sbx is not None:
         sbx.kill()
@@ -288,8 +294,10 @@ const SCREENSHOT_PATH = 'browser-example.png';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/** 轮询沙箱内 /health 端点，直到 browser 服务就绪或超时。 */
-async function waitUntilHealthy(sbx, timeout = 60) {
+/** 轮询公网网关 /health 端点，直到 browser 服务就绪或超时。 */
+async function waitUntilHealthy(sbx, host, token, timeout = 60) {
+  // 走公网网关 host（3000-<sandboxId>.<domain>），需带 X-Access-Token 头。
+  const tokenHeader = token ? `-H 'X-Access-Token: ${token}' ` : '';
   const deadline = Date.now() + timeout * 1000;
   while (Date.now() < deadline) {
     // 服务未起时 curl 会以非 0 退出（连接失败），e2b 会抛 CommandExitError，
@@ -298,7 +306,8 @@ async function waitUntilHealthy(sbx, timeout = 60) {
     try {
       result = await sbx.commands.run(
         `curl -sS -o /dev/null -w '%{http_code}' -m 4 ` +
-          `http://localhost:${BROWSERTOOL_PORT}/health`,
+          tokenHeader +
+          `https://${host}/health`,
         { timeoutMs: 10_000 },
       );
     } catch (e) {
@@ -315,17 +324,20 @@ async function waitUntilHealthy(sbx, timeout = 60) {
   throw new Error(`browser 服务在 ${timeout}s 内未就绪`);
 }
 
-/** 在沙箱内探测 /ws/livestream 的 WebSocket 握手，返回 101 即视为 VNC 就绪。 */
-async function verifyVncHandshake(sbx) {
+/** 探测公网网关 /ws/livestream 的 WebSocket 握手，返回 101 即视为 VNC 就绪。 */
+async function verifyVncHandshake(sbx, host, token) {
   // 升级成功后连接会保持为 WebSocket，curl 会一直读到 -m 超时（退出码 28），
   // 这属于预期行为，用 `|| true` 吞掉退出码，只解析已收到的响应头。
+  // 走公网网关 host（3000-<sandboxId>.<domain>），需带 X-Access-Token 头。
+  const tokenHeader = token ? `-H 'X-Access-Token: ${token}' ` : '';
   const cmd =
     `curl -sS -i -m 4 ` +
     `-H 'Connection: Upgrade' ` +
     `-H 'Upgrade: websocket' ` +
     `-H 'Sec-WebSocket-Version: 13' ` +
     `-H 'Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==' ` +
-    `http://localhost:${BROWSERTOOL_PORT}/ws/livestream || true`;
+    tokenHeader +
+    `https://${host}/ws/livestream || true`;
   const result = await sbx.commands.run(cmd, { timeoutMs: 15_000 });
   const out = result.stdout || '';
   const statusLine = out.trim() ? out.split('\n')[0].trim() : '<无响应>';
@@ -369,25 +381,25 @@ async function main() {
     const host = sbx.getHost(BROWSERTOOL_PORT);
     const cdpWsUrl = `wss://${host}/ws/automation`;
     const vncWsUrl = `wss://${host}/ws/livestream`;
+    // e2b 公网网关要求 X-Access-Token 头，否则请求/WS 升级 403
+    const token = sbx.envdAccessToken;
     console.log('\n--- WebSocket 端点 ---');
     console.log(`  host: ${host}`);
     console.log(`  CDP : ${cdpWsUrl}`);
     console.log(`  VNC : ${vncWsUrl}`);
 
     console.log('\n--- 等待健康检查 ---');
-    await waitUntilHealthy(sbx);
+    await waitUntilHealthy(sbx, host, token);
 
     console.log('\n--- Playwright CDP 用例 ---');
-    // e2b 公网网关要求 X-Access-Token 头，否则 WS 升级 403
     const headers = {};
-    const token = sbx.envdAccessToken;
     if (token) {
       headers['X-Access-Token'] = token;
     }
     await verifyWithPlaywright(cdpWsUrl, headers);
 
     console.log('\n--- VNC livestream 用例 ---');
-    await verifyVncHandshake(sbx);
+    await verifyVncHandshake(sbx, host, token);
   } finally {
     if (sbx !== null) {
       await sbx.kill();
