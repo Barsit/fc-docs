@@ -57,7 +57,7 @@ browser 模板的完整用法分为两个阶段：先**构建模板**（从 brow
 ```bash
 uv venv .venv --python 3.12
 source .venv/bin/activate
-uv pip install e2b e2b-code-interpreter 'playwright>=1.49.0'
+uv pip install e2b==2.31.0 e2b-code-interpreter==2.8.1 'playwright>=1.49.0'
 playwright install chromium
 ```
 
@@ -69,7 +69,7 @@ playwright install chromium
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "@e2b/code-interpreter": "^2.6.1",
+    "@e2b/code-interpreter": "^2.8.1",
     "e2b": "^2.31.0",
     "playwright-core": "^1.49.0"
   },
