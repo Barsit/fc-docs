@@ -81,7 +81,7 @@ try {
 
 - [沙箱模板概述](../02.内置模板.md)
 - [构建模板](../03.构建自定义镜像模板.md)
-- [生命周期](../../01.Sandbox/01.生命周期.md)
+- [生命周期](../../01.沙箱/01.生命周期.md)
 - [code-interpreter-v1 模板](code-interpreter-v1-模板.md)
 - [browser 模板](browser-模板.md)
 - [All-In-One 模板](all-in-one-模板.md)
