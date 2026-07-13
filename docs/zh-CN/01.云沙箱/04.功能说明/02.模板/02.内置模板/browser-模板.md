@@ -69,7 +69,7 @@ playwright install chromium
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "@e2b/code-interpreter": "^2.8.1",
+    "@e2b/code-interpreter": "^2.6.1",
     "e2b": "^2.31.0",
     "playwright-core": "^1.49.0"
   },
@@ -446,28 +446,23 @@ npm install -g wscat
 # 连接到 CDP 代理（host 通过 sbx.get_host(3000) 获取）
 wscat -c "wss://<sandbox-host>/ws/automation" -H "X-Access-Token:<access-token>"
 
-# 发送 CDP 命令
-{"id":1,"method":"Runtime.evaluate","params":{"expression":"navigator.userAgent"}}
+# 发送 CDP 命令，例如查询浏览器版本与 userAgent
+{"id":1,"method":"Browser.getVersion"}
 ```
 
 ## VNC 实时查看
 
-browser 模板支持通过 VNC 实时查看远程浏览器的桌面环境，方便在开发和调试阶段监控自动化任务的执行情况。
+browser 模板提供 VNC 流端点 `wss://<sandbox-host>/ws/livestream`，可用于实时查看远程浏览器的桌面环境，方便在开发和调试阶段监控自动化任务的执行情况。
 
-### 使用在线 noVNC 客户端
+> **说明**：浏览器 WebSocket API 不支持在握手时设置自定义 HTTP 请求头，因此 noVNC 等纯浏览器 VNC 客户端无法携带 `X-Access-Token`，直接连接会返回 `403`。需要使用支持自定义请求头的 WebSocket 客户端携带 `X-Access-Token` 完成鉴权，并按 RFB 协议与端点握手。例如 `wscat`、Python `websockets` 等。
 
-1. 访问 noVNC 官方提供的在线客户端：[https://novnc.com/noVNC/vnc.html](https://novnc.com/noVNC/vnc.html)
-2. 在连接设置中，**高级** > **WebSocket** 中填入以下连接信息：
-   - **主机**：通过 `sbx.get_host(3000)` 获取的 host 地址
-   - **端口**：`443`
-   - **路径**：`ws/livestream`
-3. 点击**连接**，即可看到浏览器界面。
-
-> **说明**：noVNC 连接同样需要通过 `X-Access-Token` 进行身份验证。
+带 `X-Access-Token` 的客户端连接 `/ws/livestream` 后，服务端会返回 `RFB 003.008` 版本字符串，完成 RFB 握手即可查看浏览器桌面。
 
 > **说明**
 >
 > 连接成功后，初始界面可能为黑屏或灰屏。这是正常现象，因为浏览器正在等待指令。当您的自动化脚本执行 `page.goto()` 等操作后，界面才会显示相应内容。
+
+如果只需查看自动化结果而不依赖 VNC 客户端，可通过 CDP 直接截图：使用 Playwright/Puppeteer 连接 `wss://<sandbox-host>/ws/automation`（携带 `X-Access-Token`），调用 `page.screenshot()` 保存当前画面。
 
 ## 框架集成
 
@@ -499,7 +494,7 @@ async def main():
             timeout=3000000,
             keep_alive=True,
         ),
-        extra_headers={"X-Access-Token": sbx._envd_access_token},
+        headers={"X-Access-Token": sbx._envd_access_token},
     )
 
     llm = ChatDeepSeek(api_key="sk-your-deepseek-sk")

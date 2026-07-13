@@ -90,7 +90,7 @@ playwright install chromium
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
-    "@e2b/code-interpreter": "^2.8.1",
+    "@e2b/code-interpreter": "^2.6.1",
     "e2b": "^2.31.0",
     "playwright-core": "^1.49.0"
   },
@@ -394,18 +394,45 @@ curl -sS -m 4 -i \
 
 ## VNC 实时查看
 
-All-In-One 模板支持通过 VNC 实时查看远程浏览器的桌面环境，方便在开发和调试阶段监控自动化任务的执行情况。
+All-In-One 模板内置 VNC 服务，支持实时查看浏览器桌面环境。
 
-### 使用在线 noVNC 客户端
+### VNC 端点
 
-1. 访问 noVNC 官方提供的在线客户端：[https://novnc.com/noVNC/vnc.html](https://novnc.com/noVNC/vnc.html)
-2. 在连接设置中，**高级** > **WebSocket** 中填入以下连接信息：
-   - **主机**：通过 `sbx.get_host(3000)` 或 `sbx.getHost(3000)` 获取的 host 地址
-   - **端口**：`443`
-   - **路径**：`ws/livestream`
-3. 点击**连接**，即可看到浏览器界面。
+- **WebSocket 地址**：`wss://<sandbox-host>/ws/livestream`（`<sandbox-host>` 通过 `sbx.get_host(3000)` 或 `sbx.getHost(3000)` 获取）
+- **协议**：RFB 003.008（标准 VNC 协议）
+- **鉴权**：需要在 WebSocket 握手时携带 `X-Access-Token` 请求头
 
-> **说明**：noVNC 连接同样需要通过 `X-Access-Token` 进行身份验证。连接成功后，初始界面可能为黑屏或灰屏；当自动化脚本执行 `page.goto()` 等操作后，界面会显示相应内容。
+### 客户端连接方式
+
+VNC 端点要求在 WebSocket 握手中附加自定义 HTTP 请求头 `X-Access-Token`。浏览器环境（包括 noVNC 等在线客户端）的 WebSocket API 不支持在握手阶段附加自定义请求头，因此无法直接通过在线 noVNC 客户端连接。
+
+推荐使用以下方式查看浏览器桌面：
+
+**方式一：通过 CDP 截图和自动化（推荐）**
+
+通过 Playwright 或 Puppeteer 连接 CDP 端点，使用截图、录屏、DOM 观察等方式监控浏览器状态。这是最稳定的方式，适用于调试和自动化场景。
+
+```python
+from playwright.sync_api import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.connect_over_cdp(
+        f"wss://{host}/ws/automation",
+        headers={"X-Access-Token": token}
+    )
+    page = browser.contexts[0].new_page()
+    page.goto("https://example.com")
+    page.screenshot(path="screenshot.png")
+```
+
+**方式二：使用支持自定义请求头的 WebSocket 客户端**
+
+如果您需要直接查看 VNC 流，可以使用支持自定义 HTTP 请求头的 WebSocket 客户端或代理工具，在握手时注入 `X-Access-Token`。例如：
+
+- 编写本地 WebSocket 代理，接收 noVNC 连接后附加 `X-Access-Token` 再转发到沙箱 VNC 端点
+- 使用支持自定义头的 WebSocket 调试工具（如 `websocat`、Postman WebSocket）验证连通性
+
+> **说明**：连接成功后，初始界面可能为黑屏或灰屏；当自动化脚本执行 `page.goto()` 等操作后，界面会显示相应内容。
 
 ## 组合工作流建议
 
