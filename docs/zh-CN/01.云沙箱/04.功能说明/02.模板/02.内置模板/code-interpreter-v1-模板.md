@@ -286,7 +286,7 @@ POST ${BASEURL}/sandboxes/{sandboxId}/processes/cmd
 
 - [沙箱模板概述](../02.内置模板.md)
 - [构建模板](../03.构建自定义镜像模板.md)
-- [生命周期](../../01.Sandbox/01.生命周期.md)
+- [生命周期](../../01.沙箱/01.生命周期.md)
 - [base 模板](base-模板.md)（仅需 envd 基础能力时选择）
 - [browser 模板](browser-模板.md)（仅需浏览器自动化能力时选择）
 - [All-In-One 模板](all-in-one-模板.md)（需要同时使用浏览器和代码执行能力时选择）
