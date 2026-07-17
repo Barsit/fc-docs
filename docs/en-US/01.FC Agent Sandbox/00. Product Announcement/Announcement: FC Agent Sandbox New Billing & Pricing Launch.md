@@ -22,8 +22,7 @@ To meet the diverse demands of different business scenarios, such as "compute-in
 FC Agent Sandbox has transitioned to an intuitive pay-as-you-go model based on the formula: **[Unit Price of Computing Resource × Computing Run Duration]**, making your bills clear and easy to understand. Concurrently, we have slashed unit prices to pass on cost savings directly to you—significantly reducing your scale-up operational costs and ensuring that AI innovation is no longer constrained by budget.
 
 
-## II. Target Audience & Transition Guidelines
-
-*   **Target Audience**: The new pricing model applies exclusively to FC Agent Sandbox users accessing the service via the **E2B SDK**.
-*   **Existing Customer Migration**: Users of the original "Sandbox Functions" (沙箱函数) and "AgentRun Sandbox" (AgentRun 沙箱) who wish to experience the new pricing must switch to the **E2B SDK** integration method.
-*   **Automatic Upgrades for Active E2B Customers**: As they inherently support the "Shallow Hibernation" capability, active FC Agent Sandbox customers (using the E2B SDK) will be **automatically upgraded to the Pro edition** once the new pricing takes effect. If you wish to switch to other computing editions (Eco/Std), please contact our DingTalk Support Group (**179855020297**) for assistance.
+## II. Applicability & Transition Notice
+*   **Applicable To**: The revised pricing structure is exclusively valid for FC Agent Sandbox clients utilizing the **E2B SDK** integration.
+*   **Migration Path**: Customers currently on "Sandbox Functions" or "AgentRun Sandbox" who wish to benefit from the new pricing are required to transition to the **E2B SDK** interface.
+*   **Active Account Upgrade**: Existing E2B SDK instances will be **automatically transitioned to the Pro tier** upon the effective date of the new pricing, enabling immediate access to "Shallow Hibernation" capabilities. For configuration adjustments to Eco or Std tiers, please contact us via DingTalk Group (**179855020297**).
